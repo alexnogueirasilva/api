@@ -24,7 +24,12 @@ func (repository Users) Create(user models.User) (uint64, error) {
 	if err != nil {
 		return 0, nil
 	}
-	defer statement.Close()
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+			fmt.Println("[repositories.Create] Error closing statement:", err)
+		}
+	}(statement)
 
 	result, err := statement.Exec(user.Name, user.Nick, user.Email, user.Password)
 	if err != nil {
