@@ -3,6 +3,7 @@ package repositories
 import (
 	"api/src/models"
 	"database/sql"
+	"fmt"
 )
 
 // Users represents a repositories of users
@@ -23,7 +24,12 @@ func (repository Users) Create(user models.User) (uint64, error) {
 	if err != nil {
 		return 0, nil
 	}
-	defer statement.Close()
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+
+		}
+	}(statement)
 
 	result, err := statement.Exec(user.Name, user.Nick, user.Email, user.Password)
 	if err != nil {
@@ -36,4 +42,45 @@ func (repository Users) Create(user models.User) (uint64, error) {
 	}
 
 	return uint64(lastInsertedID), nil
+}
+
+// Search searches for all users that have the name or nickname
+func (repository Users) Search(nameOrNick string) ([]models.User, error) {
+	nameOrNick = fmt.Sprintf("%%%s%%", nameOrNick)
+
+	lines, err := repository.db.Query(
+		"SELECT id, name, nickname, email, created_at FROM devbook.users WHERE name LIKE ? OR nickname LIKE ?",
+		nameOrNick, nameOrNick,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(lines *sql.Rows) {
+		err := lines.Close()
+		if err != nil {
+
+		}
+	}(lines)
+
+	var users []models.User
+
+	for lines.Next() {
+		var user models.User
+
+		if err := lines.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
 }

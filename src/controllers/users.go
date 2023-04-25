@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // CreateUser creates a new user
@@ -55,7 +56,30 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 // SearchUsers searches for all users
 func SearchUsers(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Searching users!"))
+	nicknameOrName := strings.ToLower(r.URL.Query().Get("user"))
+	db, err := database.Connect()
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
+
+	repository := repositories.NewRepositoryUsers(db)
+	users, err := repository.Search(nicknameOrName)
+
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, users)
+
 }
 
 // SearchUser searches for a user
