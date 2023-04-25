@@ -74,3 +74,39 @@ func (repository Users) Search(nameOrNick string) ([]models.User, error) {
 
 	return users, nil
 }
+
+// SearchByID searches for a user by ID in the database
+func (repository Users) SearchByID(ID uint64) (models.User, error) {
+	lines, err := repository.db.Query(
+		"SELECT id, name, nickname, email, created_at FROM devbook.users WHERE id = ?",
+		ID,
+	)
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	defer func(lines *sql.Rows) {
+		err := lines.Close()
+		if err != nil {
+			fmt.Println("[repositories.SearchByID] Error closing lines: ", err)
+		}
+	}(lines)
+
+	var userFound models.User
+
+	if lines.Next() {
+		if err := lines.Scan(
+			&userFound.ID,
+			&userFound.Name,
+			&userFound.Nick,
+			&userFound.Email,
+			&userFound.CreatedAt,
+		); err != nil {
+			return models.User{}, err
+		}
+	}
+
+	return userFound, nil
+
+}
