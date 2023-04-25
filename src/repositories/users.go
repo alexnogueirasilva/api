@@ -137,3 +137,25 @@ func (repository Users) Update(ID uint64, user models.User) error {
 
 	return nil
 }
+
+// Delete deletes a user in the database
+func (repository Users) Delete(ID uint64) error {
+	statement, err := repository.db.Prepare(
+		"DELETE FROM devbook.users WHERE id = ?",
+	)
+	if err != nil {
+		return err
+	}
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+			fmt.Println("[repositories.Delete] Error closing statement: ", err)
+		}
+	}(statement)
+
+	if _, err := statement.Exec(ID); err != nil {
+		return err
+	}
+
+	return nil
+}

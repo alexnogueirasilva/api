@@ -12,4 +12,4 @@ CREATE TABLE `users`
     `password` varchar(32) COLLATE utf8mb4_unicode_ci         NOT NULL,
     created_at timestamp DEFAULT CURRENT_TIMESTAMP
 
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
