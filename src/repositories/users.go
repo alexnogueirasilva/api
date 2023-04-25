@@ -24,12 +24,7 @@ func (repository Users) Create(user models.User) (uint64, error) {
 	if err != nil {
 		return 0, nil
 	}
-	defer func(statement *sql.Stmt) {
-		err := statement.Close()
-		if err != nil {
-
-		}
-	}(statement)
+	defer statement.Close()
 
 	result, err := statement.Exec(user.Name, user.Nick, user.Email, user.Password)
 	if err != nil {
@@ -57,12 +52,7 @@ func (repository Users) Search(nameOrNick string) ([]models.User, error) {
 		return nil, err
 	}
 
-	defer func(lines *sql.Rows) {
-		err := lines.Close()
-		if err != nil {
-
-		}
-	}(lines)
+	defer lines.Close()
 
 	var users []models.User
 
