@@ -3,7 +3,9 @@ package controllers
 import (
 	"api/src/database"
 	"api/src/models"
+	"api/src/repositories"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -26,6 +28,23 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	repository := repositories.NewRepositoryUsers(db)
+	userID, err := repository.Create(user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	write, err := w.Write([]byte(fmt.Sprintf(
+		"User created with ID %d",
+		userID,
+	)))
+	if err != nil {
+		return
+	}
+
+	fmt.Println(write)
+
 }
 
 // SearchUsers searches for all users
