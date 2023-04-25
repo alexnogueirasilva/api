@@ -52,7 +52,12 @@ func (repository Users) Search(nameOrNick string) ([]models.User, error) {
 		return nil, err
 	}
 
-	defer lines.Close()
+	defer func(lines *sql.Rows) {
+		err := lines.Close()
+		if err != nil {
+			fmt.Println("[repositories.Search] Error closing lines: ", err)
+		}
+	}(lines)
 
 	var users []models.User
 
@@ -109,4 +114,26 @@ func (repository Users) SearchByID(ID uint64) (models.User, error) {
 
 	return userFound, nil
 
+}
+
+// Update updates a user in the database
+func (repository Users) Update(ID uint64, user models.User) error {
+	statement, err := repository.db.Prepare(
+		"UPDATE devbook.users SET name = ?, nickname = ?, email = ? WHERE id = ?",
+	)
+	if err != nil {
+		return err
+	}
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+			fmt.Println("[repositories.Update] Error closing statement: ", err)
+		}
+	}(statement)
+
+	if _, err := statement.Exec(user.Name, user.Nick, user.Email, ID); err != nil {
+		return err
+	}
+
+	return nil
 }
