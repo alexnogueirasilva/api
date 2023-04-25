@@ -4,10 +4,10 @@ import (
 	"api/src/database"
 	"api/src/models"
 	"api/src/repositories"
+	"api/src/response"
+	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -16,34 +16,40 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	bodyRequest, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		log.Fatal(err)
+		response.Error(w, http.StatusUnprocessableEntity, err)
+		return
 	}
 
 	var user models.User
 	if err = json.Unmarshal(bodyRequest, &user); err != nil {
-		log.Fatal(err)
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = user.Prepare("register"); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
 	}
 
 	db, err := database.Connect()
 	if err != nil {
-		log.Fatal(err)
+		response.Error(w, http.StatusInternalServerError, err)
 	}
+
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+		}
+	}(db)
 
 	repository := repositories.NewRepositoryUsers(db)
-	userID, err := repository.Create(user)
+	user.ID, err = repository.Create(user)
 	if err != nil {
-		log.Fatal(err)
+		response.Error(w, http.StatusInternalServerError, err)
 	}
 
-	write, err := w.Write([]byte(fmt.Sprintf(
-		"User created with ID %d",
-		userID,
-	)))
-	if err != nil {
-		return
-	}
-
-	fmt.Println(write)
+	response.JSON(w, http.StatusCreated, user)
 
 }
 
