@@ -249,3 +249,44 @@ func (repository Users) Unfollow(userID, followerID uint64) error {
 
 	return nil
 }
+
+// SearchFollowers searches for all followers of a user
+func (repository Users) SearchFollowers(userID uint64) ([]models.User, error) {
+	lines, err := repository.db.Query(`
+		SELECT u.id, u.name, u.nickname, u.email, u.created_at FROM devbook.users u
+		INNER JOIN devbook.followers f ON u.id = f.follower_id
+		WHERE f.user_id = ?
+	`, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(lines *sql.Rows) {
+		err := lines.Close()
+		if err != nil {
+			fmt.Println("[repositories.SearchFollowers] Error closing lines: ", err)
+			return
+		}
+	}(lines)
+
+	var followers []models.User
+
+	for lines.Next() {
+		var follower models.User
+
+		if err := lines.Scan(
+			&follower.ID,
+			&follower.Name,
+			&follower.Nick,
+			&follower.Email,
+			&follower.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		followers = append(followers, follower)
+	}
+
+	return followers, nil
+}
