@@ -28,12 +28,13 @@ func (repository Users) Create(user models.User) (uint64, error) {
 		err := statement.Close()
 		if err != nil {
 			fmt.Println("[repositories.Create] Error closing statement:", err)
+			return
 		}
 	}(statement)
 
 	result, err := statement.Exec(user.Name, user.Nick, user.Email, user.Password)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 
 	lastInsertedID, err := result.LastInsertId()
@@ -61,6 +62,7 @@ func (repository Users) Search(nameOrNick string) ([]models.User, error) {
 		err := lines.Close()
 		if err != nil {
 			fmt.Println("[repositories.Search] Error closing lines: ", err)
+			return
 		}
 	}(lines)
 
@@ -100,6 +102,7 @@ func (repository Users) SearchByID(ID uint64) (models.User, error) {
 		err := lines.Close()
 		if err != nil {
 			fmt.Println("[repositories.SearchByID] Error closing lines: ", err)
+			return
 		}
 	}(lines)
 
@@ -133,6 +136,7 @@ func (repository Users) Update(ID uint64, user models.User) error {
 		err := statement.Close()
 		if err != nil {
 			fmt.Println("[repositories.Update] Error closing statement: ", err)
+			return
 		}
 	}(statement)
 
@@ -155,6 +159,7 @@ func (repository Users) Delete(ID uint64) error {
 		err := statement.Close()
 		if err != nil {
 			fmt.Println("[repositories.Delete] Error closing statement: ", err)
+			return
 		}
 	}(statement)
 
@@ -163,4 +168,38 @@ func (repository Users) Delete(ID uint64) error {
 	}
 
 	return nil
+}
+
+// SearchByEmail searches for a user by email in the database
+func (repository Users) SearchByEmail(email string) (models.User, error) {
+	lines, err := repository.db.Query(
+		"SELECT id, password FROM devbook.users WHERE email = ?",
+		email,
+	)
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	defer func(lines *sql.Rows) {
+		err := lines.Close()
+		if err != nil {
+			fmt.Println("[repositories.SearchByEmail] Error closing lines: ", err)
+			return
+		}
+	}(lines)
+
+	var user models.User
+
+	if lines.Next() {
+		if err := lines.Scan(
+			&user.ID,
+			&user.Password,
+		); err != nil {
+			return models.User{}, err
+		}
+	}
+
+	return user, nil
+
 }

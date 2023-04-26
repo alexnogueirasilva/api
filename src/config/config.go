@@ -14,6 +14,9 @@ var (
 
 	// Port where the API will run
 	Port = 0
+
+	// SecretKey is the key used to sign the JWT
+	SecretKey []byte
 )
 
 // Load loads the configuration file
@@ -34,4 +37,6 @@ func Load() {
 		os.Getenv("DB_PASS"),
 		os.Getenv("DB_NAME"),
 	)
+
+	SecretKey = []byte(os.Getenv("SECRET_KEY"))
 }

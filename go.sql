@@ -9,7 +9,7 @@ CREATE TABLE `users`
     `name`     varchar(50) COLLATE utf8mb4_unicode_ci         NOT NULL,
     `nickname` varchar(50) UNIQUE COLLATE utf8mb4_unicode_ci  NOT NULL,
     `email`    varchar(100) UNIQUE COLLATE utf8mb4_unicode_ci NOT NULL,
-    `password` varchar(32) COLLATE utf8mb4_unicode_ci         NOT NULL,
+    `password` varchar(120) COLLATE utf8mb4_unicode_ci         NOT NULL,
     created_at timestamp DEFAULT CURRENT_TIMESTAMP
 
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

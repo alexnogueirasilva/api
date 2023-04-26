@@ -50,6 +50,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	user.ID, err = repository.Create(user)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	response.JSON(w, http.StatusCreated, user)
@@ -68,7 +69,7 @@ func SearchUsers(w http.ResponseWriter, r *http.Request) {
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
-
+			response.Error(w, http.StatusInternalServerError, err)
 		}
 	}(db)
 
