@@ -331,3 +331,55 @@ func (repository Users) SearchFollowing(userID uint64) ([]models.User, error) {
 
 	return following, nil
 }
+
+// SearchPassword searches for a user's password
+func (repository Users) SearchPassword(userID uint64) (string, error) {
+	lines, err := repository.db.Query(`
+		SELECT password FROM devbook.users WHERE id = ?
+	`, userID)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer func(lines *sql.Rows) {
+		err := lines.Close()
+		if err != nil {
+			fmt.Println("[repositories.SearchPassword] Error closing lines: ", err)
+			return
+		}
+	}(lines)
+
+	var password string
+
+	if lines.Next() {
+		if err := lines.Scan(&password); err != nil {
+			return "", err
+		}
+	}
+
+	return password, nil
+}
+
+// UpdatePassword updates a user's password
+func (repository Users) UpdatePassword(userID uint64, password string) error {
+	statement, err := repository.db.Prepare(
+		"UPDATE devbook.users SET password = ? WHERE id = ?",
+	)
+	if err != nil {
+		return err
+	}
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+			fmt.Println("[repositories.UpdatePassword] Error closing statement: ", err)
+			return
+		}
+	}(statement)
+
+	if _, err := statement.Exec(password, userID); err != nil {
+		return err
+	}
+
+	return nil
+}
