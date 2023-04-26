@@ -13,3 +13,15 @@ CREATE TABLE `users`
     created_at timestamp DEFAULT CURRENT_TIMESTAMP
 
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `followers`;
+
+CREATE TABLE `followers`
+(
+    `user_id`  int(11) NOT NULL,
+    `follower_id`    int(11) NOT NULL,
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    PRIMARY KEY (`user_id`, `follower_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
