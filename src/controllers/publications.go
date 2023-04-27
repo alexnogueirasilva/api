@@ -296,3 +296,33 @@ func LikePublication(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusNoContent, nil)
 }
+
+// DislikePublication unlikes a publication
+func DislikePublication(w http.ResponseWriter, r *http.Request) {
+	parameters := mux.Vars(r)
+	publicationID, err := strconv.ParseUint(parameters["publicationId"], 10, 64)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+		}
+	}(db)
+
+	repository := repositories.NewRepositoryPublications(db)
+	if err = repository.Dislike(publicationID); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
+}

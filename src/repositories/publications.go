@@ -226,3 +226,25 @@ func (repository Publications) Like(publicationID uint64) error {
 
 	return nil
 }
+
+// Dislike removes a like from a publication
+func (repository Publications) Dislike(publicationID uint64) error {
+	statement, err := repository.db.Prepare(
+		"UPDATE devbook.publications SET likes = IF(likes > 0, likes - 1, 0) WHERE id = ?",
+	)
+	if err != nil {
+		return err
+	}
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+			return
+		}
+	}(statement)
+
+	if _, err = statement.Exec(publicationID); err != nil {
+		return err
+	}
+
+	return nil
+}
