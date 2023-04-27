@@ -76,3 +76,45 @@ func (repository Publications) GetPublicationByID(publicationID uint64) (models.
 
 	return publication, nil
 }
+
+// GetPublications returns all publications
+func (repository Publications) GetPublications(userID uint64) ([]models.Publication, error) {
+	lines, err := repository.db.Query(`
+		SELECT DISTINCT p.*, u.nickname FROM devbook.publications p
+		INNER JOIN devbook.users u ON u.id = p.author_id
+		INNER JOIN devbook.followers f ON p.author_id = f.user_id
+		WHERE u.id = ? OR f.follower_id = ?
+		ORDER BY 1 DESC
+	`, userID, userID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	defer func(lines *sql.Rows) {
+		err := lines.Close()
+		if err != nil {
+			return
+		}
+	}(lines)
+
+	var publications []models.Publication
+	for lines.Next() {
+		var publication models.Publication
+		if err = lines.Scan(
+			&publication.ID,
+			&publication.Title,
+			&publication.Content,
+			&publication.AuthorID,
+			&publication.Likes,
+			&publication.CreatedAt,
+			&publication.AuthorNick,
+		); err != nil {
+			return nil, err
+		}
+
+		publications = append(publications, publication)
+	}
+
+	return publications, nil
+}
