@@ -43,8 +43,8 @@ CREATE TABLE `publications`
     `title`      varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
     `content`    text COLLATE utf8mb4_unicode_ci        NOT NULL,
     `author_id`  int(11)                                NOT NULL,
-    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
     `likes`      int(11)                                NOT NULL DEFAULT 0,
+    `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB

@@ -8,8 +8,10 @@ import (
 	"api/src/response"
 	"database/sql"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 // CreatePublication creates a new publication
@@ -68,7 +70,33 @@ func GetPublications(w http.ResponseWriter, r *http.Request) {
 
 // GetPublication returns a publication
 func GetPublication(w http.ResponseWriter, r *http.Request) {
+	parameters := mux.Vars(r)
+	publicationID, err := strconv.ParseUint(parameters["publicationId"], 10, 64)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
 
+	db, err := database.Connect()
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+		}
+	}(db)
+
+	repository := repositories.NewRepositoryPublications(db)
+	publication, err := repository.GetPublicationByID(publicationID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, publication)
 }
 
 // UpdatePublication updates a publication
