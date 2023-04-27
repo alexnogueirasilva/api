@@ -204,3 +204,25 @@ func (repository Publications) GetPublicationsByUser(userID uint64) ([]models.Pu
 
 	return publications, nil
 }
+
+// Like adds a like to a publication
+func (repository Publications) Like(publicationID uint64) error {
+	statement, err := repository.db.Prepare(
+		"UPDATE devbook.publications SET likes = likes + 1 WHERE id = ?",
+	)
+	if err != nil {
+		return err
+	}
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+			return
+		}
+	}(statement)
+
+	if _, err = statement.Exec(publicationID); err != nil {
+		return err
+	}
+
+	return nil
+}
