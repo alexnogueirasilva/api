@@ -34,6 +34,11 @@ func CreatePublication(w http.ResponseWriter, r *http.Request) {
 
 	publication.AuthorID = userID
 
+	if err = publication.Prepare(); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
 	db, err := database.Connect()
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
