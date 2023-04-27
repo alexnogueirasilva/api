@@ -8,6 +8,7 @@ import (
 	"api/src/response"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -126,7 +127,66 @@ func GetPublication(w http.ResponseWriter, r *http.Request) {
 
 // UpdatePublication updates a publication
 func UpdatePublication(w http.ResponseWriter, r *http.Request) {
+	userID, err := authentication.ExtractUserID(r)
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, err)
+		return
+	}
 
+	parameters := mux.Vars(r)
+	publicationID, err := strconv.ParseUint(parameters["publicationId"], 10, 64)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+		}
+	}(db)
+
+	repository := repositories.NewRepositoryPublications(db)
+	publicationSaved, err := repository.GetPublicationByID(publicationID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if publicationSaved.AuthorID != userID {
+		response.Error(w, http.StatusForbidden, errors.New("you cannot update a publication that is not yours"))
+		return
+	}
+
+	bodyRequest, err := io.ReadAll(r.Body)
+	if err != nil {
+		response.Error(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	var publication models.Publication
+	if err = json.Unmarshal(bodyRequest, &publication); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = publication.Prepare(); err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = repository.Update(publicationID, publication); err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
 }
 
 // DeletePublication deletes a publication

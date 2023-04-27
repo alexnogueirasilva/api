@@ -118,3 +118,25 @@ func (repository Publications) GetPublications(userID uint64) ([]models.Publicat
 
 	return publications, nil
 }
+
+// Update updates a publication
+func (repository Publications) Update(publicationID uint64, publication models.Publication) error {
+	statement, err := repository.db.Prepare(
+		"UPDATE devbook.publications SET title = ?, content = ? WHERE id = ?",
+	)
+	if err != nil {
+		return err
+	}
+	defer func(statement *sql.Stmt) {
+		err := statement.Close()
+		if err != nil {
+			return
+		}
+	}(statement)
+
+	if _, err = statement.Exec(publication.Title, publication.Content, publicationID); err != nil {
+		return err
+	}
+
+	return nil
+}
