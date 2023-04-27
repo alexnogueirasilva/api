@@ -235,3 +235,34 @@ func DeletePublication(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusNoContent, nil)
 }
+
+// GetPublicationsByUser returns all publications for a user
+func GetPublicationsByUser(w http.ResponseWriter, r *http.Request) {
+	parameters := mux.Vars(r)
+	userID, err := strconv.ParseUint(parameters["userId"], 10, 64)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			response.Error(w, http.StatusInternalServerError, err)
+		}
+	}(db)
+
+	repository := repositories.NewRepositoryPublications(db)
+	publications, err := repository.GetPublicationsByUser(userID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, publications)
+}

@@ -10,6 +10,7 @@ type Publications struct {
 	db *sql.DB
 }
 
+// NewRepositoryPublications creates a new repository for publications
 func NewRepositoryPublications(db *sql.DB) *Publications {
 	return &Publications{db}
 }
@@ -161,4 +162,45 @@ func (repository Publications) Delete(publicationID uint64) error {
 	}
 
 	return nil
+}
+
+// GetPublicationsByUser returns all publications from a user
+func (repository Publications) GetPublicationsByUser(userID uint64) ([]models.Publication, error) {
+	lines, err := repository.db.Query(`
+		SELECT p.*, u.nickname FROM devbook.publications p
+		INNER JOIN devbook.users u ON u.id = p.author_id
+		WHERE p.author_id = ?
+		ORDER BY 1 DESC
+	`, userID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	defer func(lines *sql.Rows) {
+		err := lines.Close()
+		if err != nil {
+			return
+		}
+	}(lines)
+
+	var publications []models.Publication
+	for lines.Next() {
+		var publication models.Publication
+		if err = lines.Scan(
+			&publication.ID,
+			&publication.Title,
+			&publication.Content,
+			&publication.AuthorID,
+			&publication.Likes,
+			&publication.CreatedAt,
+			&publication.AuthorNick,
+		); err != nil {
+			return nil, err
+		}
+
+		publications = append(publications, publication)
+	}
+
+	return publications, nil
 }
