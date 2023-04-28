@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 // Login authenticates a user in the API
@@ -58,5 +59,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(token))
+	userID := strconv.FormatUint(userDB.ID, 10)
+	response.JSON(w, http.StatusOK, models.Authentication{ID: userID, Token: token})
 }
